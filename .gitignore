@@ -1,0 +1,8 @@
+.gradle
+.gradle-test-kit
+local.properties
+.DS_Store
+.idea
+build
+repo
+*.iml
