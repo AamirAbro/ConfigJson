@@ -5,6 +5,17 @@ apply plugin: 'groovy'
 apply plugin: 'java'
 apply plugin: 'maven'
 
+apply plugin: 'bintray-release'
+
+
+buildscript {
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath 'com.novoda:bintray-release:0.5.0'
+    }
+}
 
 sourceCompatibility = 1.8
 
@@ -26,10 +37,29 @@ dependencies {
     testCompile group: 'junit', name: 'junit', version: '4.12'
 }
 
-uploadArchives {
-    repositories {
-        mavenDeployer {
-            repository(url: uri('repo'))
-        }
-    }
+//uploadArchives {
+//    repositories {
+//        mavenDeployer {
+//            repository(url: uri('repo'))
+//        }
+//    }
+//}
+
+
+ext {
+    userOrg = 'aamirabro'
+    groupId = 'com.aamirabro'
+    publishVersion = '0.6.0'
+    website = 'https://github.com/AamirAbro/ConfigJson'
+    licences = ['MIT']
+}
+
+publish {
+    artifactId = 'configjsonplugin'
+    desc = 'Create java constants class from json config file'
+    userOrg = rootProject.userOrg
+    groupId = rootProject.groupId
+    publishVersion = rootProject.publishVersion
+    website = rootProject.website
+    licences = rootProject.licences
 }

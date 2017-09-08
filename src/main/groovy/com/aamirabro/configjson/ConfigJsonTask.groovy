@@ -1,39 +1,29 @@
-package com.aamirabro.configjson;
+package com.aamirabro.configjson
 
 import org.gradle.api.DefaultTask
-import org.gradle.api.Project;
-import org.gradle.api.tasks.Input;
-import org.gradle.api.tasks.OutputDirectory;
+import org.gradle.api.tasks.InputFile
+import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
-
-import java.io.File;
-import java.io.IOException;
-
-
-import org.gradle.api.Plugin
 import org.json.JSONObject
 
 /**
- * Created by aamirabro on 25/06/2017.
+ * Created by Aamir Abro on 25/06/2017.
  */
-public class ConfigJsonTask extends DefaultTask {
+class ConfigJsonTask extends DefaultTask {
 
 
-    @OutputDirectory
     public File intermediateDir;
 
     public String classDirString;
 
-    @Input
     public File jsonFile;
 
-    @Input
     public String packageName;
+
+
 
     @TaskAction
     public void action() throws IOException {
-
-        println "print2"
 
         if (jsonFile != null) {
             generateClass()
@@ -44,13 +34,22 @@ public class ConfigJsonTask extends DefaultTask {
 
     }
 
-    private void generateClass() {
-
-        jsonFile.withReader { inp ->
-            def content = inp.readLines().join("\n")
-
-            println content
+    @OutputFile
+    def getGeneratedClassFile () {
+        def dir = new File(classDirString)
+        if (!dir.exists()) {
+            dir.mkdirs()
         }
+
+        return new File(dir, "ConfigJson.java")
+    }
+
+    @InputFile
+    def getJsonFile () {
+        return jsonFile;
+    }
+
+    private void generateClass() {
 
         def allFields = parseFieldsFromFile()
 
@@ -69,18 +68,8 @@ public class ConfigJsonTask extends DefaultTask {
                 "}"
 
 
-        println classString
-
-        println intermediateDir
-
-        def dir = new File(classDirString)
-        if (!dir.exists()) {
-            dir.mkdirs()
-        }
-
-        def classFile = new File(dir, "ConfigJson.java")
+        def classFile = getGeneratedClassFile()
         classFile.createNewFile()
-
         classFile.withWriter {out -> out.write(classString)}
 
     }
@@ -91,14 +80,12 @@ public class ConfigJsonTask extends DefaultTask {
         jsonFile.withReader { inp ->
             def content = inp.readLines().join("\n")
 
-            println content
-
             JSONObject jsonObj = new JSONObject(content);
             jsonObj.keys().each {
                 def fieldName = it.toUpperCase(Locale.US)
                 Object fieldValue = jsonObj.get(it);
-                def fieldType = ConfigJsonTask.getTypeString(fieldValue)
-                fieldValue = ConfigJsonTask.escapeValue(fieldValue)
+                def fieldType = getTypeString(fieldValue)
+                fieldValue = escapeValue(fieldValue)
 
                 allFields.add(new ConfigJsonPlugin.JsonEntry(fieldValue, fieldName, fieldType))
             }
@@ -107,7 +94,7 @@ public class ConfigJsonTask extends DefaultTask {
     }
 
 
-    private static String getTypeString (Object fieldValue) {
+    static def getTypeString (fieldValue) {
         def fieldType
         if(fieldValue instanceof Integer){
             fieldType = 'int'
@@ -127,7 +114,7 @@ public class ConfigJsonTask extends DefaultTask {
     }
 
 
-    private static String escapeValue (fieldValue) {
+    static def escapeValue (fieldValue) {
         if (fieldValue instanceof String) {
             fieldValue = "\"$fieldValue\"" // wrap it again in quotes
         }

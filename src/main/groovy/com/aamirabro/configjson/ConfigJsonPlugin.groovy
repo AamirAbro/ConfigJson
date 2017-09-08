@@ -1,12 +1,9 @@
 package com.aamirabro.configjson
 
-
 import com.android.build.gradle.AppPlugin
 import com.android.build.gradle.LibraryPlugin
-
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.json.JSONObject
 
 class ConfigJsonPlugin implements Plugin<Project> {
 
@@ -32,11 +29,12 @@ class ConfigJsonPlugin implements Plugin<Project> {
 
     }
 
+
     private static void addGenerateConfigJsonTask(Project project, def variant) {
 
         def outputDir = new File(getBasePathForClass(project, variant))
 
-        ConfigJsonTask task = project.tasks.create("generate${variant.name}ConfigJson", ConfigJsonTask )
+        ConfigJsonTask task = project.tasks.create("generate${variant.name}ConfigJson", ConfigJsonTask)
 
         task.group = "configJsonPlugin"
         task.description = "generates Config Json Java file"
@@ -47,7 +45,6 @@ class ConfigJsonPlugin implements Plugin<Project> {
         task.packageName = getPackageName(project)
 
         variant.registerJavaGeneratingTask(task, outputDir)
-
     }
 
     private static String getJsonFileName (Project project) {
