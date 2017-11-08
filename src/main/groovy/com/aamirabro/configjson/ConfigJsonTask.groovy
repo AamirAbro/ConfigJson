@@ -2,6 +2,7 @@ package com.aamirabro.configjson
 
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.InputFile
+import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
 import org.json.JSONObject
@@ -11,25 +12,19 @@ import org.json.JSONObject
  */
 class ConfigJsonTask extends DefaultTask {
 
-
-    public File intermediateDir;
-
-    public String classDirString;
-
-    public File jsonFile;
-
-    public String packageName;
-
-
+    File intermediateDir;
+    String classDirString;
+    List<File> jsonFiles;
+    String packageName;
 
     @TaskAction
     public void action() throws IOException {
 
-        if (jsonFile != null) {
+        if (jsonFiles != null && !jsonFiles.isEmpty()) {
             generateClass()
         } else {
-            println "no config data found"
-            throw new IllegalArgumentException(String.format("please add configjsonFile and configjsonPackage", it))
+            project.logger.error 'ConfigJson: No config data found'
+            throw new IllegalArgumentException('Please add configJsonFiles and configJsonPackage')
         }
 
     }
@@ -44,18 +39,17 @@ class ConfigJsonTask extends DefaultTask {
         return new File(dir, "ConfigJson.java")
     }
 
-    @InputFile
-    def getJsonFile () {
-        return jsonFile;
+    @InputFiles
+    def getJsonFiles () {
+        return jsonFiles;
     }
 
     private void generateClass() {
 
         def allFields = parseFieldsFromFile()
 
-
         def fieldStatements = []
-        allFields.each {
+        allFields.values().each {
             fieldStatements.add("\tpublic static final $it.fieldType $it.fieldName = $it.fieldValue;")
         }
 
@@ -67,6 +61,7 @@ class ConfigJsonTask extends DefaultTask {
                 "\n" +
                 "}"
 
+        project.logger.info('ConfigJson: java file \n {}', classString)
 
         def classFile = getGeneratedClassFile()
         classFile.createNewFile()
@@ -75,27 +70,34 @@ class ConfigJsonTask extends DefaultTask {
     }
 
 
-    private List parseFieldsFromFile () {
-        def allFields = []
-        jsonFile.withReader { inp ->
-            def content = inp.readLines().join("\n")
+    def parseFieldsFromFile () {
 
-            JSONObject jsonObj = new JSONObject(content);
-            jsonObj.keys().each {
-                def fieldName = it.toUpperCase(Locale.US)
-                Object fieldValue = jsonObj.get(it);
-                def fieldType = getTypeString(fieldValue)
-                fieldValue = escapeValue(fieldValue)
+        project.logger.lifecycle('ConfigJson: using files : {}', getJsonFiles())
 
-                allFields.add(new ConfigJsonPlugin.JsonEntry(fieldValue, fieldName, fieldType))
+        Map<String, JsonEntry> allFields = new HashMap<String, JsonEntry>();
+        getJsonFiles().each {
+
+            it.withReader { inp ->
+                def content = inp.readLines().join("\n")
+
+                JSONObject jsonObj = new JSONObject(content);
+                jsonObj.keys().each {
+                    def fieldName = it.toUpperCase(Locale.US)
+                    Object fieldValue = jsonObj.get(it);
+                    def fieldType = getTypeString(fieldValue)
+                    fieldValue = escapeValue(fieldValue)
+
+                    allFields.put(fieldName, new JsonEntry(fieldName, fieldValue, fieldType))
+                }
             }
         }
+
         return allFields
     }
 
 
     static def getTypeString (fieldValue) {
-        def fieldType
+        String fieldType
         if(fieldValue instanceof Integer){
             fieldType = 'int'
         } else if (fieldValue instanceof Float) {
@@ -119,6 +121,18 @@ class ConfigJsonTask extends DefaultTask {
             fieldValue = "\"$fieldValue\"" // wrap it again in quotes
         }
         return fieldValue
+    }
+
+    static class JsonEntry {
+        Object fieldValue;
+        String fieldName;
+        String fieldType;
+
+        JsonEntry(String fieldName, Object fieldValue, String fieldType) {
+            this.fieldName = fieldName
+            this.fieldValue = fieldValue
+            this.fieldType = fieldType
+        }
     }
 
 

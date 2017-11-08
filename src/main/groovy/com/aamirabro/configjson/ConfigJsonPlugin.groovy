@@ -5,7 +5,10 @@ import com.android.build.gradle.LibraryPlugin
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 
+import java.util.stream.Collectors
+
 class ConfigJsonPlugin implements Plugin<Project> {
+
 
     @Override
     void apply(Project project) {
@@ -16,15 +19,18 @@ class ConfigJsonPlugin implements Plugin<Project> {
             throw new IllegalStateException("'android' or 'android-library' plugin required.")
         }
 
-        def variants
-        if (hasApp) {
-            variants = project.android.applicationVariants
-        } else {
-            variants = project.android.libraryVariants
-        }
+        project.afterEvaluate {
 
-        variants.all { variant ->
-            addGenerateConfigJsonTask(project, variant)
+            def variants
+            if (hasApp) {
+                variants = project.android.applicationVariants
+            } else {
+                variants = project.android.libraryVariants
+            }
+
+            variants.all { variant ->
+                addGenerateConfigJsonTask(project, variant)
+            }
         }
 
     }
@@ -41,14 +47,28 @@ class ConfigJsonPlugin implements Plugin<Project> {
 
         task.intermediateDir = outputDir
         task.classDirString = getBasePathForClass(project, variant) + "/" + getPackageName(project).replace(".", "/")
-        task.jsonFile = new File(project.projectDir, getJsonFileName(project))
+
+        task.jsonFiles = getJsonFiles(project, variant)
         task.packageName = getPackageName(project)
 
         variant.registerJavaGeneratingTask(task, outputDir)
     }
 
-    private static String getJsonFileName (Project project) {
-        project.extensions.getByName("ext").properties.get("configJsonFile")
+    private static List<File> getJsonFiles (Project project, def variant) {
+        Set<String> configFileNames = new HashSet<>();
+
+        List<String> globalFiles = project.extensions.getByName("ext").properties["configJsonFiles"]
+        if (globalFiles != null) {
+            configFileNames.addAll(globalFiles)
+        }
+
+        if (variant.getBuildType().hasProperty('configJsonFiles')) {
+            configFileNames.addAll(variant.getBuildType().getProperty('configJsonFiles'))
+        }
+
+        return configFileNames.stream()
+                .map({name ->  new File(project.projectDir, name)})
+                .collect(Collectors.toList())
     }
 
     private static String getPackageName (Project project) {
@@ -65,16 +85,4 @@ class ConfigJsonPlugin implements Plugin<Project> {
         "$project.buildDir/generated/configJson/java/$variant.dirName"
     }
 
-
-    static class JsonEntry {
-        Object fieldValue;
-        String fieldName;
-        String fieldType;
-
-        JsonEntry(Object fieldValue, String fieldName, String fieldType) {
-            this.fieldValue = fieldValue
-            this.fieldName = fieldName
-            this.fieldType = fieldType
-        }
-    }
 }
