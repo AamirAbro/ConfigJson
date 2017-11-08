@@ -1,11 +1,12 @@
 package com.aamirabro.configjson
 
 import org.gradle.api.DefaultTask
-import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
 import org.json.JSONObject
+
+import java.util.stream.Collectors
 
 /**
  * Created by Aamir Abro on 25/06/2017.
@@ -14,13 +15,13 @@ class ConfigJsonTask extends DefaultTask {
 
     File intermediateDir;
     String classDirString;
-    List<File> jsonFiles;
+    Collection<String> jsonFileNames;
     String packageName;
 
     @TaskAction
     public void action() throws IOException {
 
-        if (jsonFiles != null && !jsonFiles.isEmpty()) {
+        if (jsonFileNames != null && !jsonFileNames.isEmpty()) {
             generateClass()
         } else {
             project.logger.error 'ConfigJson: No config data found'
@@ -41,7 +42,9 @@ class ConfigJsonTask extends DefaultTask {
 
     @InputFiles
     def getJsonFiles () {
-        return jsonFiles;
+        return jsonFileNames.stream()
+                .map({name ->  new File(project.projectDir, name)})
+                .collect(Collectors.toList());
     }
 
     private void generateClass() {
@@ -50,7 +53,7 @@ class ConfigJsonTask extends DefaultTask {
 
         def fieldStatements = []
         allFields.values().each {
-            fieldStatements.add("\tpublic static final $it.fieldType $it.fieldName = $it.fieldValue;")
+            fieldStatements.add("    public static final $it.fieldType $it.fieldName = $it.fieldValue;")
         }
 
         def fieldsStr = fieldStatements.join("\n")
@@ -61,7 +64,7 @@ class ConfigJsonTask extends DefaultTask {
                 "\n" +
                 "}"
 
-        project.logger.info('ConfigJson: java file \n {}', classString)
+        project.logger.info('ConfigJson: java file \n{}', classString)
 
         def classFile = getGeneratedClassFile()
         classFile.createNewFile()
@@ -72,7 +75,7 @@ class ConfigJsonTask extends DefaultTask {
 
     def parseFieldsFromFile () {
 
-        project.logger.lifecycle('ConfigJson: using files : {}', getJsonFiles())
+        project.logger.lifecycle('ConfigJson: using files : {}', jsonFileNames)
 
         Map<String, JsonEntry> allFields = new HashMap<String, JsonEntry>();
         getJsonFiles().each {

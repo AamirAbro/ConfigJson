@@ -5,8 +5,6 @@ import com.android.build.gradle.LibraryPlugin
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 
-import java.util.stream.Collectors
-
 class ConfigJsonPlugin implements Plugin<Project> {
 
 
@@ -48,13 +46,13 @@ class ConfigJsonPlugin implements Plugin<Project> {
         task.intermediateDir = outputDir
         task.classDirString = getBasePathForClass(project, variant) + "/" + getPackageName(project).replace(".", "/")
 
-        task.jsonFiles = getJsonFiles(project, variant)
+        task.jsonFileNames = getJsonFiles(project, variant)
         task.packageName = getPackageName(project)
 
         variant.registerJavaGeneratingTask(task, outputDir)
     }
 
-    private static List<File> getJsonFiles (Project project, def variant) {
+    private static Collection<String> getJsonFiles (Project project, def variant) {
         Set<String> configFileNames = new HashSet<>();
 
         List<String> globalFiles = project.extensions.getByName("ext").properties["configJsonFiles"]
@@ -66,9 +64,7 @@ class ConfigJsonPlugin implements Plugin<Project> {
             configFileNames.addAll(variant.getBuildType().getProperty('configJsonFiles'))
         }
 
-        return configFileNames.stream()
-                .map({name ->  new File(project.projectDir, name)})
-                .collect(Collectors.toList())
+        return configFileNames;
     }
 
     private static String getPackageName (Project project) {
