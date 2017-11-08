@@ -2,7 +2,7 @@ ConfigJson
 ========================
 A gradle plugin for getting java constant from JSON config files for Android.
 
-This plugin generate config from json files and then in the code those config can be used as just any other public static final fields with all the benifits to having static analysis and compilation.
+This plugin generates java config from json files and then in the java code these configs can be used as just any other public static final fields, with all the benifits of having static analysis and compilation.
 
 Usage
 ----
@@ -69,6 +69,10 @@ Usage
     }
     ```
 
+
+Pulbish
+-------
+use this to publish a new version https://github.com/novoda/bintray-release
 
 
 License
