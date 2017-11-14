@@ -13,7 +13,7 @@ Usage
    buildscript {
       ...
       dependencies {
-         classpath 'com.aamirabro:configjsonplugin:0.9.1'
+         classpath 'com.aamirabro:configjsonplugin:0.9.2'
       }
    }
 
@@ -24,7 +24,7 @@ Usage
    alternatively, you can use the new plugin syntax for gradle `2.1+`
    ```groovy
    plugins {
-      id "com.aamirabro.configjson" version "0.9.1"
+      id "com.aamirabro.configjson" version "0.9.2"
    }
    ```
 
