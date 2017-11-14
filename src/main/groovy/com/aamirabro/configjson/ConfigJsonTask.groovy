@@ -15,7 +15,7 @@ class ConfigJsonTask extends DefaultTask {
 
     File intermediateDir;
     String classDirString;
-    Collection<String> jsonFileNames;
+    List<String> jsonFileNames;
     String packageName;
 
     @TaskAction

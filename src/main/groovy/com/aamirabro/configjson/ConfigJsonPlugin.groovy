@@ -52,8 +52,8 @@ class ConfigJsonPlugin implements Plugin<Project> {
         variant.registerJavaGeneratingTask(task, outputDir)
     }
 
-    private static Collection<String> getJsonFiles (Project project, def variant) {
-        Set<String> configFileNames = new HashSet<>();
+    private static List<String> getJsonFiles (Project project, def variant) {
+        List<String> configFileNames = new ArrayList<>();
 
         List<String> globalFiles = project.extensions.getByName("ext").properties["configJsonFiles"]
         if (globalFiles != null) {
