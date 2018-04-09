@@ -77,16 +77,16 @@ class ConfigJsonTask extends DefaultTask {
 
         project.logger.lifecycle('ConfigJson: using files : {}', jsonFileNames)
 
-        Map<String, JsonEntry> allFields = new HashMap<String, JsonEntry>();
+        Map<String, JsonEntry> allFields = new HashMap<String, JsonEntry>()
         getJsonFiles().each {
 
             it.withReader { inp ->
                 def content = inp.readLines().join("\n")
 
-                JSONObject jsonObj = new JSONObject(content);
+                JSONObject jsonObj = new JSONObject(content)
                 jsonObj.keys().each {
                     def fieldName = it.toUpperCase(Locale.US)
-                    Object fieldValue = jsonObj.get(it);
+                    Object fieldValue = jsonObj.get(it)
                     def fieldType = getTypeString(fieldValue)
                     fieldValue = escapeValue(fieldValue)
 
@@ -103,6 +103,8 @@ class ConfigJsonTask extends DefaultTask {
         String fieldType
         if(fieldValue instanceof Integer){
             fieldType = 'int'
+        } else if (fieldValue instanceof Long) {
+            fieldType = 'long'
         } else if (fieldValue instanceof Float) {
             fieldType = 'float'
         } else if (fieldValue instanceof Double) {
@@ -112,7 +114,7 @@ class ConfigJsonTask extends DefaultTask {
         } else if (fieldValue instanceof String) {
             fieldType = 'String'
         } else {
-            throw new IllegalArgumentException(String.format("Field %s has unknown type", fieldValue))
+            throw new IllegalArgumentException(String.format("Field %s has unknown type %s", fieldValue, fieldValue.class))
         }
 
         return fieldType
@@ -122,6 +124,8 @@ class ConfigJsonTask extends DefaultTask {
     static def escapeValue (fieldValue) {
         if (fieldValue instanceof String) {
             fieldValue = "\"$fieldValue\"" // wrap it again in quotes
+        } else if (fieldValue instanceof Long) {
+            fieldValue = fieldValue+"L"
         }
         return fieldValue
     }
